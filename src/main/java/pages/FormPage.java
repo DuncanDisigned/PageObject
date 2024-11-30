@@ -1,5 +1,6 @@
 package pages;
 
+import com.github.javafaker.Faker;
 import components.DateAndConfirmationComponent;
 import data.LanguageLevel;
 import org.apache.logging.log4j.LogManager;
@@ -11,14 +12,16 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.text.Normalizer;
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.util.Date;
+
 
 public class FormPage extends BasePage{
     private static final Logger logger = LogManager.getLogger(FormPage.class);
+
+    private final Faker faker = new Faker();
 
     private By usernameField = By.id("username");
     private By emailField = By.id("email");
@@ -26,7 +29,6 @@ public class FormPage extends BasePage{
     private By confirmPasswordField = By.id("confirm_password");
     private By dateOfBirthField = By.id("birthdate");
     private By languageLevelSelect = By.id("language_level");
-    private By languageLevel = By.id("language_level");
     private By submitButton = By.cssSelector("input[type='submit']");
     private By confirmationMessage = By.id("output");
 
@@ -68,14 +70,18 @@ public class FormPage extends BasePage{
     }
 
 
-    public void selectDateOfBirth(String dob) {
-        driver.findElement(dateOfBirthField).sendKeys(dob);
+    public void selectDateOfBirth(Date birthdate) {
+        String inputBirthdateValue = new SimpleDateFormat("dd-MM-yyyy").format(birthdate); // Формат для ввода
+        logger.info("Ввод даты рождения: " + inputBirthdateValue);
+        driver.findElement(dateOfBirthField).sendKeys(inputBirthdateValue);
     }
 
     public void selectLanguageLevel(LanguageLevel level) {
+        logger.info("Выбор уровня языка");
         WebElement dropdown = driver.findElement(languageLevelSelect);
         Select select = new Select(dropdown);
-        select.selectByValue(String.valueOf(level));
+        select.selectByValue(level.getValue());
+
     }
 
     public void submitForm() {
@@ -88,12 +94,6 @@ public class FormPage extends BasePage{
     }
 
 
-    public boolean isPasswordMatching() {
-        String password = driver.findElement(passwordField).getAttribute("value");
-        String confirmPassword = driver.findElement(confirmPasswordField).getAttribute("value");
-        return password.equals(confirmPassword);
-    }
-
     public String getConfirmationMessage() {
         WebDriverWait
                 wait = new WebDriverWait(driver, Duration.ofSeconds(10));
@@ -101,24 +101,28 @@ public class FormPage extends BasePage{
         return driver.findElement(confirmationMessage).getText(); // Получение текста из элемента
     }
 
-    public boolean submitFormAndVerify(String username, String email, String birthdate, LanguageLevel languageLevel) {
-        fillForm(username, email, "password", birthdate, languageLevel);
-        submitForm();
+    public boolean submitFormAndVerify(String username, String email, String password, LanguageLevel languageLevel) {
+        Date birthdate = faker.date().birthday(); // Создайте дату рождения один раз
+        String expectedBirthdateValue = new SimpleDateFormat("yyyy-MM-dd").format(birthdate); // Ожидаемый формат для проверки
 
+        // Заполнение формы
+        fillForm(username, email, password, birthdate, languageLevel);
+        // Отправка формы
+        submitForm();
         // Создайте экземпляр DateAndConfirmationComponent
         DateAndConfirmationComponent dateAndConfirmationComponent = new DateAndConfirmationComponent();
 
+        // Получение текста подтверждения после отправки формы
         String confirmationMessageText = getConfirmationMessage();
 
-        // Преобразуем дату
-        String formattedBirthdate = dateAndConfirmationComponent.convertDateFormat(birthdate); // Убедитесь, что формат 'dd-MM-yyyy'
 
-        // Теперь здесь должны быть корректные данные, чтобы не было null
+        // Проверка соответствия сообщения
         return dateAndConfirmationComponent.verifyConfirmationMessage(
-                confirmationMessageText, username, email, formattedBirthdate, languageLevel.toString());
+                confirmationMessageText, username, email, expectedBirthdateValue);
     }
+
     // Метод для заполнения формы
-    private void fillForm(String username, String email, String password, String birthdate, LanguageLevel languageLevel) {
+    private void fillForm(String username, String email, String password, Date birthdate, LanguageLevel languageLevel) {
         enterUsername(username);
         enterEmail(email);
         enterPassword(password);

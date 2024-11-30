@@ -1,26 +1,25 @@
+import com.github.javafaker.Faker;
 import data.LanguageLevel;
 import factory.WebDriverFactory;
-import io.github.bonigarcia.wdm.WebDriverManager;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.Select;
-import org.openqa.selenium.support.ui.WebDriverWait;
+
 import pages.FormPage;
 
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FormTest{
     private static final Logger logger = LogManager.getLogger(FormPage.class);
-
+    private final Faker faker = new Faker();
     protected WebDriver driver;
 
     @BeforeEach
@@ -41,21 +40,17 @@ public class FormTest{
     }
 
     @Test
-    public void testFormSubmission() {
-        // Создание экземпляра FormPage, который автоматически откроет нужный URL
+    public  void testFormSubmission() {
+
         FormPage formPage = new FormPage(driver);
-
         // Данные для заполнения формы
-        String username = System.getProperty("username", "testuser");
-        String password = System.getProperty("password", "password");
-        String email = "testuser@example.com"; // Можно заменить на динамически генерируемый
-        String birthdate = "12-12-1992";// Пример даты
+        String username = System.getProperty("username");
+        String password = System.getProperty("password");
+        String email = "testuser@example.com";
+        LanguageLevel languageLevel = LanguageLevel.INTERMEDIATE;
 
-        LanguageLevel languageLevel = LanguageLevel.intermediate;
+        boolean isMessageCorrect = formPage.submitFormAndVerify(username, email, password, languageLevel);
 
-        boolean isMessageCorrect = formPage.submitFormAndVerify(username, email, birthdate, languageLevel);
-
-        // Проверка результата
         assertTrue(isMessageCorrect, "Текст подтверждения не соответствует ожиданиям!");
 
 

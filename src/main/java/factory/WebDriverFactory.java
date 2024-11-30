@@ -13,7 +13,7 @@ public class WebDriverFactory {
 
     // Получение драйвера браузера с указанием режима
     public static WebDriver getBrowser(String browser, String mode) {
-        WebDriver driver;
+        WebDriver driver = null;
 
         switch (browser.toLowerCase()) {
             case "firefox":
@@ -31,12 +31,12 @@ public class WebDriverFactory {
                 break;
 
             case "chrome":
-            default:
                 WebDriverManager.chromedriver().setup();
                 ChromeOptions chromeOptions = new ChromeOptions();
                 applyMode(chromeOptions, mode);
                 driver = new ChromeDriver(chromeOptions);
                 break;
+            default: 
         }
 
         return driver;
